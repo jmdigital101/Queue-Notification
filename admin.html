@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queue Admin</title>
+    <style>
+        body {
+            font-family: -apple-system, sans-serif;
+            text-align: center;
+            padding: 50px;
+            background: #fafafa;
+        }
+
+        .serving {
+            font-size: 5rem;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+
+        button {
+            padding: 20px 40px;
+            font-size: 1.5rem;
+            background: #0070f3;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            margin: 10px;
+        }
+
+        .reset {
+            background: #ff0000;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>Store Admin Dashboard</h2>
+    <div>Currently Serving Ticket</div>
+    <div class="serving" id="current-serving">-</div>
+
+    <button onclick="callNext()">Mark Served & Call Next</button>
+    <br><br>
+    <button class="reset" onclick="resetQueue()">Reset System</button>
+
+    <script>
+        async function fetchStatus() {
+            const res = await fetch('/api/status');
+            const data = await res.json();
+            document.getElementById('current-serving').innerText = data.serving;
+        }
+
+        async function callNext() {
+            const res = await fetch('/api/admin/serve', { method: 'POST' });
+            const data = await res.json();
+            document.getElementById('current-serving').innerText = data.serving;
+        }
+
+        async function resetQueue() {
+            if (confirm("Are you sure you want to reset all tickets to 0?")) {
+                await fetch('/api/admin/reset');
+                fetchStatus();
+            }
+        }
+
+        fetchStatus();
+        setInterval(fetchStatus, 3000); // Admin screen updates every 3s
+    </script>
+</body>
+
+</html>

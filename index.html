@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Queue</title>
+    <style>
+        body {
+            font-family: -apple-system, sans-serif;
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .ticket {
+            font-size: 4rem;
+            font-weight: bold;
+            color: #0070f3;
+            margin: 20px 0;
+        }
+
+        .serving {
+            font-size: 2rem;
+            color: #666;
+        }
+
+        button {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background: #000;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="welcome-screen">
+        <h2>Welcome to the Queue</h2>
+        <button onclick="joinQueue()">Join Queue</button>
+    </div>
+
+    <div id="queue-screen" style="display: none;">
+        <div>Your Ticket</div>
+        <div class="ticket" id="my-ticket">-</div>
+        <div class="serving">Currently Serving: <span id="current-serving">-</span></div>
+        <h3 id="turn-alert" style="color: red; display: none;">It's your turn! Please proceed to the counter.</h3>
+    </div>
+
+    <script>
+        let myTicketNumber = 0;
+
+        async function joinQueue() {
+            const res = await fetch('/api/join');
+            const data = await res.json();
+
+            myTicketNumber = data.ticket;
+            document.getElementById('my-ticket').innerText = data.ticket;
+            document.getElementById('current-serving').innerText = data.serving;
+
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('queue-screen').style.display = 'block';
+
+            // Start checking for updates every 5 seconds
+            setInterval(checkStatus, 5000);
+            checkTurn(data.serving);
+        }
+
+        async function checkStatus() {
+            const res = await fetch('/api/status');
+            const data = await res.json();
+            document.getElementById('current-serving').innerText = data.serving;
+            checkTurn(data.serving);
+        }
+
+        function checkTurn(currentlyServing) {
+            if (myTicketNumber > 0 && myTicketNumber <= currentlyServing) {
+                document.getElementById('turn-alert').style.display = 'block';
+                if ("vibrate" in navigator) navigator.vibrate([200, 100, 200]);
+            }
+        }
+    </script>
+</body>
+
+</html>
