@@ -1,23 +1,23 @@
 import { getRedis } from './_redis.js';
-import { serialize, parse } from 'cookie';
 import crypto from 'crypto';
+
+function getCookie(cookieHeader, name) {
+    if (!cookieHeader) return null;
+    const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
+    return match ? decodeURIComponent(match[1]) : null;
+}
 
 export default async function handler(req, res) {
     try {
         const redis = await getRedis();
 
         // 1. Check for existing session
-        const cookies = parse(req.headers.cookie || '');
-        let sessionId = cookies.session_id;
+        let sessionId = getCookie(req.headers.cookie, 'session_id');
 
         if (!sessionId) {
             sessionId = crypto.randomUUID();
-            // Drop a cookie in the user's browser
-            res.setHeader('Set-Cookie', serialize('session_id', sessionId, {
-                path: '/',
-                httpOnly: true,
-                maxAge: 60 * 60 * 24
-            }));
+            // Drop a session cookie in the user's browser (valid for 24 hours)
+            res.setHeader('Set-Cookie', `session_id=${sessionId}; Path=/; HttpOnly; Max-Age=${60 * 60 * 24}; SameSite=Lax`);
         }
 
         // 2. Check if this session already has a ticket
