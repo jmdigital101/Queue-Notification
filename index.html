@@ -52,17 +52,22 @@
         let myTicketNumber = 0;
 
         async function joinQueue() {
-            const res = await fetch('/api/join');
-            const data = await res.json();
+            let sessionId = localStorage.getItem('queue_session_id');
+            if (!sessionId) {
+                sessionId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                localStorage.setItem('queue_session_id', sessionId);
+            }
 
+            const res = await fetch(`/api/join?sessionId=${sessionId}`);
+            const data = await res.json();
+            
             myTicketNumber = data.ticket;
             document.getElementById('my-ticket').innerText = data.ticket;
             document.getElementById('current-serving').innerText = data.serving;
-
+            
             document.getElementById('welcome-screen').style.display = 'none';
             document.getElementById('queue-screen').style.display = 'block';
-
-            // Start checking for updates every 5 seconds
+            
             setInterval(checkStatus, 5000);
             checkTurn(data.serving);
         }
